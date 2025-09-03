@@ -1,0 +1,189 @@
+<div class="card">
+  <h1>Personal PTO Planner</h1>
+  <p class="sub">Dates stay on one line. Entries stack vertically. Editors auto-save.</p>
+
+  <div class="grid">
+    <div>
+      <label>Starting balance (hours)</label>
+      <input type="number" [(ngModel)]="st.startBal" step="0.01" (ngModelChange)="touch()" />
+    </div>
+    <div>
+      <label>Starting balance date</label>
+      <div class="date-wrap">
+        <input type="date" [(ngModel)]="st.startDate" (ngModelChange)="touch()" />
+        <button class="calbtn" (click)="showPicker($event)">📅</button>
+      </div>
+    </div>
+    <div>
+      <label>Accrual mode</label>
+      <select [(ngModel)]="st.mode" (ngModelChange)="touch()">
+        <option value="perYear">Linear — hours per year</option>
+        <option value="perPeriod">Per period (weekly/biweekly/monthly/custom)</option>
+      </select>
+    </div>
+
+    <div *ngIf="st.mode==='perYear'">
+      <label>Hours accrued per year</label>
+      <input type="number" [(ngModel)]="st.hoursPerYear" step="0.01" (ngModelChange)="touch()" />
+    </div>
+
+    <div *ngIf="st.mode==='perPeriod'">
+      <label>Hours per accrual event · Period</label>
+      <div class="row">
+        <input type="number" [(ngModel)]="st.hoursPerPeriod" step="0.01" (ngModelChange)="touch()" />
+        <select [(ngModel)]="st.period" (ngModelChange)="touch()">
+          <option value="weekly">Weekly (7 d)</option>
+          <option value="biweekly">Biweekly (14 d)</option>
+          <option value="monthly">Monthly (last day)</option>
+          <option value="semiMonthly">Semi-monthly (15th &amp; last day)</option>
+          <option value="custom">Custom (days)</option>
+        </select>
+        <input *ngIf="st.period==='custom'" type="number" [(ngModel)]="st.customDays" step="1" (ngModelChange)="touch()" />
+      </div>
+      <div class="hint">For semi-monthly, enter hours per event.</div>
+    </div>
+
+    <div>
+      <label>Carryover cap (hours, optional)</label>
+      <input type="number" [ngModel]="st.carryCap ?? ''" (ngModelChange)="setCarryCap($event)" step="0.01" />
+    </div>
+    <div>
+      <label>Carryover reset date (defaults Jan 1)</label>
+      <div class="date-wrap">
+        <input type="date" [(ngModel)]="st.carryReset" (ngModelChange)="touch()" />
+        <button class="calbtn" (click)="showPicker($event)">📅</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="justify-content:space-between; margin-top:18px">
+    <h2 style="margin:0;font-size:18px">Planned PTO Entries</h2>
+    <div class="row toolbar">
+      <button class="link" (click)="demo()">Demo rows</button>
+      <button class="link" (click)="sortByDate()">Sort by date</button>
+      <button class="link" (click)="addRow()">+ add entry</button>
+      <span style="flex:1"></span>
+      <button class="link" (click)="exportJSON()">Export JSON</button>
+      <button class="link" (click)="fileInput.click()">Import JSON</button>
+      <button class="link" (click)="clearSaved()">Clear saved</button>
+      <input type="file" #fileInput accept="application/json" style="display:none" (change)="onImport($event)" />
+    </div>
+  </div>
+
+  <table id="tbl">
+    <thead>
+    <tr>
+      <th>Date</th><th>Hours</th><th>Note</th>
+      <th>Balance before</th><th>Balance after</th><th>Status</th><th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let e of st.entries; let i = index; trackBy: trackByEntry">
+      <td class="nw">
+        <div class="date-wrap">
+          <input type="date" [(ngModel)]="e.date" (ngModelChange)="touch()" />
+          <button class="calbtn" (click)="showPicker($event)">📅</button>
+        </div>
+      </td>
+      <td><input type="number" step="0.01" [(ngModel)]="e.hours" (ngModelChange)="touch()" /></td>
+      <td><input type="text" [(ngModel)]="e.note" (ngModelChange)="touch()" placeholder="Vacation" /></td>
+      <td class="nw">{{ rowCalcs()[i].before }} h</td>
+      <td class="nw">{{ rowCalcs()[i].after }} h</td>
+      <td class="nw" [class.ok]="rowCalcs()[i].ok" [class.bad]="!rowCalcs()[i].ok">
+        {{ rowCalcs()[i].ok ? 'OK' : 'Short' }}
+      </td>
+      <td class="nw"><button class="link" (click)="removeAt(i)">remove</button></td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="row" style="justify-content:flex-end; margin-top:10px">
+    <button class="link" (click)="addRow()">+ add entry</button>
+  </div>
+
+  <div class="result">
+    <div class="metric">
+      <h3>Total planned PTO (through Dec 31)</h3>
+      <div class="val">-{{ totalPlanned() }} h</div>
+    </div>
+    <div class="metric">
+      <h3>Projected balance on Dec 31</h3>
+      <div class="val" [class.ok]="eoyBalance()>=0" [class.bad]="eoyBalance()<0">{{ fmt(eoyBalance()) }} h</div>
+    </div>
+  </div>
+
+  <h2>Accrual Windows (this year)</h2>
+  <table id="windowsTable">
+    <thead>
+    <tr>
+      <th>Window</th>
+      <th>Accrual date</th>
+      <th>Start balance</th>
+      <th>Entries in window</th>
+      <th>PTO used</th>
+      <th>Accrual posted (override)</th>
+      <th>End balance</th>
+    </tr>
+    </thead>
+    <tbody>
+    <ng-container *ngFor="let w of windows(); let wi = index; trackBy: trackByWindow">
+      <tr>
+        <td class="nw">{{ w.start }} → {{ w.end }}</td>
+        <td class="nw">{{ w.end }}</td>
+        <td>{{ fmt(w.startBal) }} h</td>
+        <td>
+          <div class="win-chiplist" *ngIf="w.items.length; else none">
+              <span class="win-chip" *ngFor="let it of w.items; trackBy: trackByEntry">
+                {{ it.date }}: -{{ fmt(it.hours) }} h<span *ngIf="it.note"> — {{ it.note }}</span>
+              </span>
+          </div>
+          <ng-template #none><span class="win-chiplist">—</span></ng-template>
+        </td>
+        <td>-{{ fmt(w.used) }} h</td>
+        <td>
+          <input class="accrual-input" type="number" step="0.01"
+                 [ngModel]="getOverride(w.key, w.computed)"
+                 (ngModelChange)="setOverride(w.key, $event)" />
+          <div class="hint">(computed: +{{ fmt(w.computed) }} h)</div>
+        </td>
+        <td [class.ok]="w.endBal>=0" [class.bad]="w.endBal<0">{{ fmt(w.endBal) }} h
+          <div class="win-actions" style="margin-top:6px">
+            <button class="win-manage" type="button" (click)="toggleManage(wi)">Manage</button>
+          </div>
+        </td>
+      </tr>
+
+      <tr class="win-editor" [style.display]="openEditor===wi ? 'table-row' : 'none'">
+        <td [attr.colspan]="7">
+          <div class="hint" style="margin-bottom:6px">
+            Edit entries only for <b>{{ w.start }} → {{ w.end }}</b>
+          </div>
+          <div class="editor-body">
+            <div class="row" *ngFor="let it of w.items; let ri = index; trackBy: trackByEntry">
+              <input type="date" [(ngModel)]="w.items[ri].date"
+                     [attr.min]="minInside(w.start)" [attr.max]="w.end" (change)="commitEditorRow(wi, ri)" />
+              <input type="number" step="0.01" [(ngModel)]="w.items[ri].hours" (change)="commitEditorRow(wi, ri)" />
+              <input type="text" [(ngModel)]="w.items[ri].note" (change)="commitEditorRow(wi, ri)" />
+              <div>
+                <button class="mini" (click)="commitEditorRow(wi, ri)">Save</button>
+                <button class="mini del" (click)="deleteEditorRow(wi, ri)">Delete</button>
+              </div>
+            </div>
+
+            <div class="add-block">
+              <div class="row">
+                <input type="date" [ngModel]="minInside(w.start)" (ngModelChange)="newDate.set($event)"
+                       [attr.min]="minInside(w.start)" [attr.max]="w.end" />
+                <input type="number" class="new-hours" step="0.01" [ngModel]="8" (ngModelChange)="newHours.set(+($event||0))" />
+                <input type="text" class="new-note" placeholder="Note (optional)" [ngModel]="''" (ngModelChange)="newNote.set($event||'')" />
+                <button class="mini add" type="button" (click)="addEditorRow(wi)">Add</button>
+              </div>
+              <div class="hint">Date must be inside the window (exclusive start, inclusive end).</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </ng-container>
+    </tbody>
+  </table>
+</div>
