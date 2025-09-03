@@ -78,15 +78,16 @@
     </tr>
     </thead>
     <tbody>
+    <!-- Use $any(e) to silence IDE type nags; Angular runtime is fine -->
     <tr *ngFor="let e of st.entries; let i = index; trackBy: trackByEntry">
       <td class="nw">
         <div class="date-wrap">
-          <input type="date" [(ngModel)]="e.date" (ngModelChange)="touch()" />
+          <input type="date" [(ngModel)]="$any(e).date" (ngModelChange)="touch()" />
           <button class="calbtn" (click)="showPicker($event)">📅</button>
         </div>
       </td>
-      <td><input type="number" step="0.01" [(ngModel)]="e.hours" (ngModelChange)="touch()" /></td>
-      <td><input type="text" [(ngModel)]="e.note" (ngModelChange)="touch()" placeholder="Vacation" /></td>
+      <td><input type="number" step="0.01" [(ngModel)]="$any(e).hours" (ngModelChange)="touch()" /></td>
+      <td><input type="text" [(ngModel)]="$any(e).note" (ngModelChange)="touch()" placeholder="Vacation" /></td>
       <td class="nw">{{ rowCalcs()[i].before }} h</td>
       <td class="nw">{{ rowCalcs()[i].after }} h</td>
       <td class="nw" [class.ok]="rowCalcs()[i].ok" [class.bad]="!rowCalcs()[i].ok">
@@ -159,11 +160,18 @@
             Edit entries only for <b>{{ w.start }} → {{ w.end }}</b>
           </div>
           <div class="editor-body">
+            <!-- Use loop var `it` to avoid indexed-expression warnings -->
             <div class="row" *ngFor="let it of w.items; let ri = index; trackBy: trackByEntry">
-              <input type="date" [(ngModel)]="w.items[ri].date"
-                     [attr.min]="minInside(w.start)" [attr.max]="w.end" (change)="commitEditorRow(wi, ri)" />
-              <input type="number" step="0.01" [(ngModel)]="w.items[ri].hours" (change)="commitEditorRow(wi, ri)" />
-              <input type="text" [(ngModel)]="w.items[ri].note" (change)="commitEditorRow(wi, ri)" />
+              <input type="date"
+                     [(ngModel)]="it.date"
+                     [attr.min]="minInside(w.start)" [attr.max]="w.end"
+                     (change)="commitEditorRow(wi, ri)" />
+              <input type="number" step="0.01"
+                     [(ngModel)]="it.hours"
+                     (change)="commitEditorRow(wi, ri)" />
+              <input type="text"
+                     [(ngModel)]="it.note"
+                     (change)="commitEditorRow(wi, ri)" />
               <div>
                 <button class="mini" (click)="commitEditorRow(wi, ri)">Save</button>
                 <button class="mini del" (click)="deleteEditorRow(wi, ri)">Delete</button>
