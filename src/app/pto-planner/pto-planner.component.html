@@ -2,6 +2,12 @@
   <h1>Personal PTO Planner</h1>
   <p class="sub">Dates stay on one line. Entries stack vertically. Editors auto-save.</p>
 
+  <div class="row" style="gap:10px; margin:6px 0 14px">
+    <button class="link" (click)="saveToFile()">Save JSON</button>
+    <button class="link" (click)="fileInput.click()">Load JSON</button>
+    <input type="file" #fileInput accept="application/json" (change)="onImport($event)" style="display:none" />
+  </div>
+
   <div class="grid">
     <div>
       <label>Starting balance (hours)</label>
@@ -56,55 +62,22 @@
     </div>
   </div>
 
-  <div class="row" style="justify-content:space-between; margin-top:18px">
-    <h2 style="margin:0;font-size:18px">Planned PTO Entries</h2>
-    <div class="row toolbar">
-      <button class="link" (click)="demo()">Demo rows</button>
-      <button class="link" (click)="sortByDate()">Sort by date</button>
-      <button class="link" (click)="addRow()">+ add entry</button>
-      <span style="flex:1"></span>
-      <button class="link" (click)="exportJSON()">Export JSON</button>
-      <button class="link" (click)="fileInput.click()">Import JSON</button>
-      <button class="link" (click)="clearSaved()">Clear saved</button>
-      <input type="file" #fileInput accept="application/json" style="display:none" (change)="onImport($event)" />
-    </div>
-  </div>
-
-  <table id="tbl">
-    <thead>
-    <tr>
-      <th>Date</th><th>Hours</th><th>Note</th>
-      <th>Balance before</th><th>Balance after</th><th>Status</th><th></th>
-    </tr>
-    </thead>
-    <tbody>
-    <!-- Use $any(e) to silence IDE type nags; Angular runtime is fine -->
-    <tr *ngFor="let e of st.entries; let i = index; trackBy: trackByEntry">
-      <td class="nw">
-        <div class="date-wrap">
-          <input type="date" [(ngModel)]="$any(e).date" (ngModelChange)="touch()" />
-          <button class="calbtn" (click)="showPicker($event)">📅</button>
-        </div>
-      </td>
-      <td><input type="number" step="0.01" [(ngModel)]="$any(e).hours" (ngModelChange)="touch()" /></td>
-      <td><input type="text" [(ngModel)]="$any(e).note" (ngModelChange)="touch()" placeholder="Vacation" /></td>
-      <td class="nw">{{ rowCalcs()[i].before }} h</td>
-      <td class="nw">{{ rowCalcs()[i].after }} h</td>
-      <td class="nw" [class.ok]="rowCalcs()[i].ok" [class.bad]="!rowCalcs()[i].ok">
-        {{ rowCalcs()[i].ok ? 'OK' : 'Short' }}
-      </td>
-      <td class="nw"><button class="link" (click)="removeAt(i)">remove</button></td>
-    </tr>
-    </tbody>
-  </table>
-
-  <div class="row" style="justify-content:flex-end; margin-top:10px">
-    <button class="link" (click)="addRow()">+ add entry</button>
+  <!-- SINGLE ADD FORM (clamped to 12/31/prev -> 12/30/curr) -->
+  <h2 style="margin-top:18px">Planned PTO Entry</h2>
+  <div class="row" style="gap:12px;margin:8px 0 16px">
+    <input type="date"
+           [ngModel]="newDate()"
+           (ngModelChange)="newDate.set($event)"
+           [attr.min]="yearStart()" [attr.max]="yearEndDisplay()" />
+    <input type="number" step="0.01" [ngModel]="newHours()" (ngModelChange)="newHours.set(+($event||0))" />
+    <input type="text" placeholder="Note (optional)"
+           [ngModel]="newNote()" (ngModelChange)="newNote.set($event||'')" />
+    <button class="link" (click)="addQuickEntry()">Add</button>
   </div>
 
   <div class="result">
     <div class="metric">
-      <h3>Total planned PTO (through Dec 31)</h3>
+      <h3>Total planned PTO (through Dec 30)</h3>
       <div class="val">-{{ totalPlanned() }} h</div>
     </div>
     <div class="metric">
@@ -129,8 +102,8 @@
     <tbody>
     <ng-container *ngFor="let w of windows(); let wi = index; trackBy: trackByWindow">
       <tr>
-        <td class="nw">{{ w.start }} → {{ w.end }}</td>
-        <td class="nw">{{ w.end }}</td>
+        <td class="nw">{{ w.start }} → {{ w.endDisplay }}</td>
+        <td class="nw">{{ w.accrualDate }}</td>
         <td>{{ fmt(w.startBal) }} h</td>
         <td>
           <div class="win-chiplist" *ngIf="w.items.length; else none">
@@ -157,14 +130,15 @@
       <tr class="win-editor" [style.display]="openEditor===wi ? 'table-row' : 'none'">
         <td [attr.colspan]="7">
           <div class="hint" style="margin-bottom:6px">
-            Edit entries only for <b>{{ w.start }} → {{ w.end }}</b>
+            Date must be inside the window (inclusive start, exclusive end).
           </div>
           <div class="editor-body">
-            <!-- Use loop var `it` to avoid indexed-expression warnings -->
+            <!-- Editor rows -->
             <div class="row" *ngFor="let it of w.items; let ri = index; trackBy: trackByEntry">
               <input type="date"
                      [(ngModel)]="it.date"
-                     [attr.min]="minInside(w.start)" [attr.max]="w.end"
+                     [attr.min]="w.start"
+                     [attr.max]="w.endDisplay"
                      (change)="commitEditorRow(wi, ri)" />
               <input type="number" step="0.01"
                      [(ngModel)]="it.hours"
@@ -178,15 +152,22 @@
               </div>
             </div>
 
+            <!-- Add block: per-window drafts -->
             <div class="add-block">
               <div class="row">
-                <input type="date" [ngModel]="minInside(w.start)" (ngModelChange)="newDate.set($event)"
-                       [attr.min]="minInside(w.start)" [attr.max]="w.end" />
-                <input type="number" class="new-hours" step="0.01" [ngModel]="8" (ngModelChange)="newHours.set(+($event||0))" />
-                <input type="text" class="new-note" placeholder="Note (optional)" [ngModel]="''" (ngModelChange)="newNote.set($event||'')" />
+                <input type="date"
+                       [ngModel]="getAddDate(wi, w.start)"
+                       (ngModelChange)="newDateByWin[wi]=$event"
+                       [attr.min]="w.start"
+                       [attr.max]="w.endDisplay" />
+                <input type="number" class="new-hours" step="0.01"
+                       [ngModel]="getAddHours(wi)"
+                       (ngModelChange)="newHoursByWin[wi]=+($event||0)" />
+                <input type="text" class="new-note" placeholder="Note (optional)"
+                       [ngModel]="getAddNote(wi)"
+                       (ngModelChange)="newNoteByWin[wi]=$event||''" />
                 <button class="mini add" type="button" (click)="addEditorRow(wi)">Add</button>
               </div>
-              <div class="hint">Date must be inside the window (exclusive start, inclusive end).</div>
             </div>
           </div>
         </td>
