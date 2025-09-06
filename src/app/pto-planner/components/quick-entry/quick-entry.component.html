@@ -1,0 +1,14 @@
+<h2 style="margin-top:18px">Planned PTO Entry</h2>
+<div class="row" style="gap:12px;margin:8px 0 16px">
+  <input type="date"
+         [ngModel]="newDate()"
+         (ngModelChange)="newDate.set($event)"
+         [attr.min]="store.yearStart()" [attr.max]="store.yearEndDisplay()" />
+  <input type="number" step="0.01" [ngModel]="newHours()" (ngModelChange)="newHours.set(+($event||0))" />
+  <input type="text" placeholder="Note (optional)"
+         [ngModel]="newNote()" (ngModelChange)="newNote.set($event||'')" />
+  <button class="link" (click)="addQuickEntry()">Add</button>
+  <div class="hint">Allowed range: {{ store.yearStart() }} → {{ store.yearEndDisplay() }}</div>
+  
+</div>
+
