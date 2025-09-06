@@ -1,0 +1,11 @@
+<div class="result">
+  <div class="metric">
+    <h3>Total planned PTO (through Dec 30)</h3>
+    <div class="val">-{{ store.totalPlanned() }} h</div>
+  </div>
+  <div class="metric">
+    <h3>Projected balance on Dec 31</h3>
+    <div class="val" [class.ok]="store.eoyBalance()>=0" [class.bad]="store.eoyBalance()<0">{{ store.fmt(store.eoyBalance()) }} h</div>
+  </div>
+</div>
+

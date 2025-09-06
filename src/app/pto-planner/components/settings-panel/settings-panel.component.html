@@ -1,0 +1,54 @@
+<div class="grid">
+  <div>
+    <label>Starting balance (hours)</label>
+    <input type="number" [ngModel]="store.st().startBal" step="0.01" (ngModelChange)="store.setStartBal($event)" />
+  </div>
+  <div>
+    <label>Starting balance date</label>
+    <div class="date-wrap">
+      <input type="date" [ngModel]="store.st().startDate" (ngModelChange)="store.setStartDate($event)" />
+      <button class="calbtn" (click)="showPicker($event)">📅</button>
+    </div>
+  </div>
+  <div>
+    <label>Accrual mode</label>
+    <select [ngModel]="store.st().mode" (ngModelChange)="store.setMode($event)">
+      <option value="perYear">Linear — hours per year</option>
+      <option value="perPeriod">Per period (weekly/biweekly/monthly/custom)</option>
+    </select>
+  </div>
+
+  <div *ngIf="store.st().mode==='perYear'">
+    <label>Hours accrued per year</label>
+    <input type="number" [ngModel]="store.st().hoursPerYear" step="0.01" (ngModelChange)="store.setHoursPerYear($event)" />
+  </div>
+
+  <div *ngIf="store.st().mode==='perPeriod'">
+    <label>Hours per accrual event · Period</label>
+    <div class="row">
+      <input type="number" [ngModel]="store.st().hoursPerPeriod" step="0.01" (ngModelChange)="store.setHoursPerPeriod($event)" />
+      <select [ngModel]="store.st().period" (ngModelChange)="store.setPeriod($event)">
+        <option value="weekly">Weekly (7 d)</option>
+        <option value="biweekly">Biweekly (14 d)</option>
+        <option value="monthly">Monthly (last day)</option>
+        <option value="semiMonthly">Semi-monthly (15th &amp; last day)</option>
+        <option value="custom">Custom (days)</option>
+      </select>
+      <input *ngIf="store.st().period==='custom'" type="number" [ngModel]="store.st().customDays" step="1" (ngModelChange)="store.setCustomDays($event)" />
+    </div>
+    <div class="hint">For semi-monthly, enter hours per event.</div>
+  </div>
+
+  <div>
+    <label>Carryover cap (hours, optional)</label>
+    <input type="number" [ngModel]="store.st().carryCap ?? ''" (ngModelChange)="store.setCarryCap($event)" step="0.01" />
+  </div>
+  <div>
+    <label>Carryover reset date (defaults Jan 1)</label>
+    <div class="date-wrap">
+      <input type="date" [ngModel]="store.st().carryReset" (ngModelChange)="store.setCarryReset($event)" />
+      <button class="calbtn" (click)="showPicker($event)">📅</button>
+    </div>
+  </div>
+</div>
+
