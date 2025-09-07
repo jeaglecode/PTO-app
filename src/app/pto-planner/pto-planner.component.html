@@ -2,10 +2,16 @@
   <h1>Personal PTO Planner</h1>
   <p class="sub">Dates stay on one line. Entries stack vertically. Editors auto-save.</p>
 
-  <div class="row" style="gap:10px; margin:6px 0 14px">
-    <button class="link" (click)="saveToFile()">Save JSON</button>
-    <button class="link" (click)="fileInput.click()">Load JSON</button>
-    <input type="file" #fileInput accept="application/json" (change)="onImport($event)" style="display:none" />
+  <div class="row" style="gap:10px; margin:6px 0 14px; align-items:center; justify-content:space-between">
+    <div>
+      <button class="link" (click)="saveToFile()">Save JSON</button>
+      <button class="link" (click)="fileInput.click()">Load JSON</button>
+      <input type="file" #fileInput accept="application/json" (change)="onImport($event)" style="display:none" />
+    </div>
+    <div style="display:flex; gap:10px; align-items:center">
+      <span style="opacity:.8; font-size:12px">{{ userEmail }}</span>
+      <button class="link" (click)="logout()">Logout</button>
+    </div>
   </div>
 
   <app-settings-panel />
