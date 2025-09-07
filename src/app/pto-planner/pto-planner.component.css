@@ -61,8 +61,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.85) sepia(0) saturate(0) hue-rotate(0deg) brightness(1.1) contrast(1.1);
   opacity: 1;
 }
-input[type="date"]::-webkit-datetime-edit-fields-wrapper { color: var(--text); }
-input[type="date"]::-webkit-datetime-edit { color: var(--text); }
+
 
 button { cursor: pointer; background: #12314d; }
 button:active { background: #19507b; }
