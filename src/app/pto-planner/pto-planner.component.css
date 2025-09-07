@@ -56,8 +56,16 @@ input, select, button {
 }
 
 input[type=date] { padding: 8px 10px; }
+/* Improve visibility of the calendar icon on dark background */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85) sepia(0) saturate(0) hue-rotate(0deg) brightness(1.1) contrast(1.1);
+  opacity: 1;
+}
+input[type="date"]::-webkit-datetime-edit-fields-wrapper { color: var(--text); }
+input[type="date"]::-webkit-datetime-edit { color: var(--text); }
 
 button { cursor: pointer; background: #12314d; }
+button:active { background: #19507b; }
 button.link { background: transparent; border: 1px dashed #2b3b52; }
 
 /* ---- Layout Grid ---- */
@@ -142,16 +150,55 @@ td.nw { white-space: nowrap; }
   align-items: center;
   margin: 6px 0;
 }
-.win-editor .mini {
+/* Mini buttons used across pages */
+.mini {
   padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid #2b3b52;
-  background: #0f1621;
+  background: #12314d;
 }
-.win-editor .mini.del {
+.mini:active { background: #19507b; }
+.mini.del {
   background: #2a0f13;
   border-color: #4b1c1f;
 }
+
+/* Icon-only buttons */
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+}
+.icon { width: 24px; height: 24px; display: block; }
+
+/* Icon colors */
+.icon-btn.save { color: #7cc4ff; }
+.icon-btn.del { color: #ff7a7a; }
+
+.icon-btn:hover { opacity: 0.9; }
+.icon-btn:active { transform: translateY(0); opacity: 0.8; }
+
+/* Hold-to-delete progress ring */
+.icon-btn.del { position: relative; }
+.icon-btn.del.holding::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(currentColor var(--p, 0%), transparent 0);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+/* Small status text next to Save buttons */
+.save-status { margin-left: 6px; font-size: 12px; color: var(--muted); }
+.save-status.ok { color: var(--good); }
 
 @media (max-width:1180px) {
   .grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
