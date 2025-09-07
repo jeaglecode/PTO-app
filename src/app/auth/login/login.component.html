@@ -1,0 +1,27 @@
+<div class="login-shell">
+  <div class="login-card">
+  <h2>{{ mode === 'login' ? 'Sign In' : 'Create Account' }}</h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <label>Email</label>
+    <input type="email" formControlName="email" placeholder="you@example.com" />
+    <div class="err" *ngIf="form.controls.email.touched && form.controls.email.invalid">Enter a valid email</div>
+
+    <label>Password</label>
+    <input type="password" formControlName="password" placeholder="••••••••" />
+    <div class="err" *ngIf="form.controls.password.touched && form.controls.password.invalid">Min length 6</div>
+
+    <button type="submit" [disabled]="loading || form.invalid">
+      {{ loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account') }}
+    </button>
+  </form>
+
+  <p class="switch">
+    <a (click)="mode = mode === 'login' ? 'register' : 'login'">
+      {{ mode === 'login' ? 'Need an account? Register' : 'Have an account? Sign in' }}
+    </a>
+  </p>
+
+  <p class="err" *ngIf="errorMsg">{{ errorMsg }}</p>
+  </div>
+</div>
