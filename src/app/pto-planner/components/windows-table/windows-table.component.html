@@ -27,9 +27,11 @@
       </td>
       <td>-{{ store.fmt(w.used) }} h</td>
       <td>
-        <input class="accrual-input" type="number" step="0.01"
-               [ngModel]="store.getOverride(w.key, w.computed)"
-               (ngModelChange)="store.setOverride(w.key, $event)" />
+        <input class="accrual-input" type="number" step="0.01" #accrualInput
+               [attr.data-window-key]="w.key"
+               [value]="store.getOverride(w.key, w.computed)"
+               (focus)="onAccrualFocus(w.key, accrualInput)"
+               (blur)="onAccrualBlur(w.key, accrualInput)" />
         <div class="hint">(computed: +{{ store.fmt(w.computed) }} h)</div>
       </td>
       <td [class.ok]="w.endBal>=0" [class.bad]="w.endBal<0">{{ store.fmt(w.endBal) }} h
@@ -87,4 +89,16 @@
   </ng-container>
   </tbody>
 </table>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showConfirmModal" (click)="cancelAccrualChange()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>Confirm Accrual Change</h3>
+    <p>Are you sure you want to change the Accrual value?</p>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" (click)="cancelAccrualChange()">Cancel</button>
+      <button class="modal-btn confirm" (click)="confirmAccrualChange()">Yes</button>
+    </div>
+  </div>
+</div>
 
