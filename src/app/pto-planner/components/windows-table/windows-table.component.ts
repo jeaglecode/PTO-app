@@ -34,6 +34,21 @@ export class WindowsTableComponent {
   trackByEntry = (_: number, e: { id: string }) => e.id;
   trackByWindow = (_: number, w: { key: string }) => w.key;
 
+  // Format date string from YYYY-MM-DD to MM-DD-YYYY for display only
+  formatDateDisplay(dateStr: string): string {
+    if (!dateStr || typeof dateStr !== 'string') return dateStr;
+    
+    // Expecting format like "2025-09-29", convert to "09-29-2025"
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return `${month}-${day}-${year}`;
+    }
+    
+    // If not in expected format, return as-is
+    return dateStr;
+  }
+
 
 
   // Store original value when user starts editing
