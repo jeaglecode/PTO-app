@@ -2,5 +2,8 @@
   "installCommand": "npm ci --include=optional",
   "buildCommand": "npm run build",
   "framework": "angular",
-  "outputDirectory": "dist/pto-planner"
+  "outputDirectory": "dist/pto-planner/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
 }
