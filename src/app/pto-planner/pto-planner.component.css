@@ -128,7 +128,7 @@ td.nw { white-space: nowrap; }
   flex-direction: column;
   gap: 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px; /* smaller entries text */
   line-height: 1.35;
 }
 .win-chip {
