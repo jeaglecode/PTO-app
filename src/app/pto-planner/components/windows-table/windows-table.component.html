@@ -20,7 +20,7 @@
       <td>
         <div class="win-chiplist" *ngIf="w.items.length; else none">
             <span class="win-chip" *ngFor="let it of w.items; trackBy: trackByEntry">
-              {{ formatDateDisplay(it.date) }}: -{{ store.fmt(it.hours) }} h<span *ngIf="it.note"> — {{ it.note }}</span>
+              {{ formatDateDisplay(it.date) }}: {{ getDayOfWeek(it.date) }}  -{{ store.fmt(it.hours) }} h<span *ngIf="it.note"> — {{ it.note }}</span>
             </span>
         </div>
         <ng-template #none><span class="win-chiplist">—</span></ng-template>

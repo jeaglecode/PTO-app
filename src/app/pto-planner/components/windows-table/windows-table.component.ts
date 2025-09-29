@@ -49,6 +49,16 @@ export class WindowsTableComponent {
     return dateStr;
   }
 
+  getDayOfWeek(dateStr: string): string {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return '';
+    const [y, m, d] = parts.map(Number);
+    const dt = new Date(y, (m as number) - 1, d);
+    if (isNaN(dt.getTime())) return '';
+    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];
+  }
+
 
 
   // Store original value when user starts editing

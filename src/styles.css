@@ -15,6 +15,15 @@ body {
   font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial;
 }
 
+/* Aurulent Sans Mono (OTF) for entry chips */
+@font-face {
+  font-family: "Aurulent Sans Mono";
+  src: url("/fonts/AurulentSansMono-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* reset default Angular styles */
 html, body {
   height: 100%;
